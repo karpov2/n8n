@@ -1,11 +1,8 @@
-# ----------------------------
-# docker-compose.yml para n8n Enterprise Hack
-# ----------------------------
 version: '3.8'
 
 services:
   db:
-    image: postgres:14
+    image: postgres:14-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -14,7 +11,7 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U n8n"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -26,27 +23,27 @@ services:
       db:
         condition: service_healthy
     environment:
-      # Conexão com Postgres
+      # Postgres
       DB_TYPE: ${DB_TYPE}
       DB_POSTGRESDB_HOST: ${DB_POSTGRESDB_HOST}
       DB_POSTGRESDB_PORT: ${DB_POSTGRESDB_PORT}
-      DB_POSTGRESDB_DATABASE: ${DB_POSTGRESDB_DATABASE}
-      DB_POSTGRESDB_USER: ${DB_POSTGRESDB_USER}
-      DB_POSTGRESDB_PASSWORD: ${DB_POSTGRESDB_PASSWORD}
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
 
-      # Timezone e migrações
+      # Timezone & миграции
       GENERIC_TIMEZONE: ${GENERIC_TIMEZONE}
       N8N_DATABASE_MIGRATE: ${N8N_DATABASE_MIGRATE}
 
-      # Basic Auth
+      # Basic Auth (при необходимости)
       N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE}
       N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
       N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
 
-      # Hack Enterprise
+      # Enterprise Hack
       N8N_SKIP_LICENSE_CHECK: ${N8N_SKIP_LICENSE_CHECK}
 
-      # Porta interna
+      # Порт внутри контейнера
       N8N_PORT: ${N8N_PORT}
 
     ports:

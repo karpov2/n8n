@@ -1,39 +1,27 @@
-# ----------------------------
-# Dockerfile para n8n Enterprise Hack
-# ----------------------------
-	FROM node:20-alpine
+FROM node:20-alpine
 
-	# Aumenta o heap para 8GB
-ENV NODE_OPTIONS="--max-old-space-size=8192"
+# Увеличиваем хип до 4GB (достаточно для сборки и работы)
+ENV NODE_OPTIONS="--max-old-space-size=4096" \
+    DOCKER_BUILD=true \
+    N8N_SKIP_LICENSE_CHECK=true
 
-	# Instala utilitários e cliente psql (opcional)
-	RUN apk add --no-cache bash git python3 make g++ postgresql-client
+WORKDIR /usr/src/app
 
-	# Variáveis para pular hooks no build, dar mais heap e apontar módulos
-	ENV DOCKER_BUILD=true \
-			NODE_OPTIONS=--max-old-space-size=4096 \
-			NODE_PATH=/usr/src/app/node_modules \
-			N8N_SKIP_LICENSE_CHECK=true
+# Установка инструментов (git для клона, python3/g++ для сборки, psql – для доступа к БД)
+RUN apk add --no-cache bash git python3 make g++ postgresql-client \
+ && npm install -g pnpm
 
-	WORKDIR /usr/src/app
+# Копируем весь репозиторий и собираем
+COPY . .
+RUN pnpm install --frozen-lockfile \
+ && pnpm run build
 
-	# 1️⃣ Copia todo o repositório
-	COPY . .
+# Делаем bin-скрипт исполняемым
+RUN sed -i 's/\r$//' packages/cli/bin/n8n \
+ && chmod +x packages/cli/bin/n8n \
+ && ln -s /usr/src/app/packages/cli/bin/n8n /usr/local/bin/n8n
 
-	# 2️⃣ Instala pnpm, dependências e faz o build do monorepo
-	RUN npm install -g pnpm \
-	 && pnpm install --frozen-lockfile \
-	 && pnpm run build
+EXPOSE 5678
 
-	# 3️⃣ Ajusta o script binário (remove CRLF e dá permissão)
-	RUN sed -i 's/\r$//' packages/cli/bin/n8n \
-	 && chmod +x packages/cli/bin/n8n
-
-	# 4️⃣ Cria um link global para o comando n8n
-	RUN ln -s /usr/src/app/packages/cli/bin/n8n /usr/local/bin/n8n
-
-	# Expondo a porta padrão do n8n
-	EXPOSE 5678
-
-	# Inicia o n8n (já rodando com o hack de licença)
-	CMD ["n8n","start"]
+ENTRYPOINT ["n8n"]
+CMD ["start"]
