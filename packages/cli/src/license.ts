@@ -114,6 +114,17 @@ export class License implements LicenseProvider {
 				expirySoonOffsetMins,
 			});
 
+			// === HACK: forçar "Enterprise" em modo local ===
+			if (process.env.N8N_SKIP_LICENSE_CHECK === 'true') {
+				this.logger.warn('⚠️ Pulando checagem de licença (N8N_SKIP_LICENSE_CHECK=true)');
+				const mgr = this.manager as any;
+				mgr.hasFeatureEnabled = () => true;
+				mgr.getFeatureValue = () => Infinity;
+				mgr.getCurrentEntitlements = () => [];
+				mgr.getMainPlan = () => ({ productId: 'enterprise', planName: 'enterprise' });
+			}
+			// === /HACK ===
+
 			await this.manager.initialize();
 
 			this.logger.debug('License initialized');

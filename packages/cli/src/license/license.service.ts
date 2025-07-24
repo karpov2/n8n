@@ -110,7 +110,14 @@ export class LicenseService {
 		return this.license.getManagementJwt();
 	}
 
+	/**
+	 * HACK: Em dev/local, pulamos a ativação de licença.
+	 */
 	async activateLicense(activationKey: string) {
+		if (process.env.N8N_SKIP_LICENSE_CHECK === 'true') {
+			return;
+		}
+
 		try {
 			await this.license.activate(activationKey);
 		} catch (e) {
@@ -119,7 +126,15 @@ export class LicenseService {
 		}
 	}
 
+	/**
+	 * HACK: Em dev/local, pulamos a renovação de licença.
+	 */
 	async renewLicense() {
+		if (process.env.N8N_SKIP_LICENSE_CHECK === 'true') {
+			this.eventService.emit('license-renewal-attempted', { success: true });
+			return;
+		}
+
 		if (this.license.getPlanName() === 'Community') return; // unlicensed, nothing to renew
 
 		try {

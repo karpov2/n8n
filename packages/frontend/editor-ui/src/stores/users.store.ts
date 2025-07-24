@@ -111,9 +111,8 @@ export const useUsersStore = defineStore(STORES.USERS, () => {
 		return getPersonalizedNodeTypes(answers);
 	});
 
-	const usersLimitNotReached = computed(
-		(): boolean => userQuota.value === -1 || userQuota.value > allUsers.value.length,
-	);
+	// ========== HACK: sempre abaixo da cota, pra habilitar invites ==========
+	const usersLimitNotReached = computed((): boolean => true);
 
 	// Methods
 
